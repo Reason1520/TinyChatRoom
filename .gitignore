@@ -58,3 +58,8 @@ Thumbs.db
 # code 目录下的副本
 code/
 ChatServer2/
+# Allow TinyChat client project files
+!TinyChat/**/*.vcxproj
+!TinyChat/**/*.vcxproj.filters
+!TinyChat/**/*.slnx
+!TinyChat/**/*.rc

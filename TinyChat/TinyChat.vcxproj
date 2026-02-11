@@ -1,0 +1,243 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{5AC33CE2-41A1-49C8-A8E2-DFEB53B66DCD}</ProjectGuid>
+    <Keyword>QtVS_v304</Keyword>
+    <WindowsTargetPlatformVersion Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">10.0</WindowsTargetPlatformVersion>
+    <QtMsBuild Condition="'$(QtMsBuild)'=='' OR !Exists('$(QtMsBuild)\qt.targets')">$(MSBuildProjectDirectory)\QtMsBuild</QtMsBuild>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v145</PlatformToolset>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v145</PlatformToolset>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Condition="Exists('$(QtMsBuild)\qt_defaults.props')">
+    <Import Project="$(QtMsBuild)\qt_defaults.props" />
+  </ImportGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="QtSettings">
+    <QtInstall>6.10.1_msvc2022_64</QtInstall>
+    <QtModules>core;gui;network;widgets</QtModules>
+    <QtBuildConfig>debug</QtBuildConfig>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="QtSettings">
+    <QtInstall>6.10.1_msvc2022_64</QtInstall>
+    <QtModules>core;gui;widgets</QtModules>
+    <QtBuildConfig>release</QtBuildConfig>
+  </PropertyGroup>
+  <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') or !Exists('$(QtMsBuild)\qt.props')">
+    <Message Importance="High" Text="QtMsBuild: could not locate qt.targets, qt.props; project may not build correctly." />
+  </Target>
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared" />
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(QtMsBuild)\Qt.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(QtMsBuild)\Qt.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PreBuildEvent>
+      <Command>copy /Y "$(ProjectDir)config.ini" "$(OutDir)"</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PreBuildEvent>
+      <Command>copy /Y "$(ProjectDir)config.ini" "$(OutDir)"</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
+    <ClCompile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="Configuration">
+    <ClCompile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="adduseritem.cpp" />
+    <ClCompile Include="applyfriend.cpp" />
+    <ClCompile Include="applyfrienditem.cpp" />
+    <ClCompile Include="applyfriendlist.cpp" />
+    <ClCompile Include="applyfriendpage.cpp" />
+    <ClCompile Include="authenfriend.cpp" />
+    <ClCompile Include="bubbleframe.cpp" />
+    <ClCompile Include="chatdialog.cpp" />
+    <ClCompile Include="chatitembase.cpp" />
+    <ClCompile Include="chatpage.cpp" />
+    <ClCompile Include="chatuserlist.cpp" />
+    <ClCompile Include="chatuserwid.cpp" />
+    <ClCompile Include="chatview.cpp" />
+    <ClCompile Include="clickedbtn.cpp" />
+    <ClCompile Include="clickedlabel.cpp" />
+    <ClCompile Include="clickedoncelabel.cpp" />
+    <ClCompile Include="contactuserlist.cpp" />
+    <ClCompile Include="conuseritem.cpp" />
+    <ClCompile Include="customizeedit.cpp" />
+    <ClCompile Include="filetcpmgr.cpp" />
+    <ClCompile Include="findfaildlg.cpp" />
+    <ClCompile Include="findsuccessdlg.cpp" />
+    <ClCompile Include="friendinfopage.cpp" />
+    <ClCompile Include="friendlabel.cpp" />
+    <ClCompile Include="global.cpp" />
+    <ClCompile Include="grouptipitem.cpp" />
+    <ClCompile Include="httpmgr.cpp">
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">input</DynamicSource>
+      <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).moc</QtMocFileName>
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Release|x64'">input</DynamicSource>
+      <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).moc</QtMocFileName>
+    </ClCompile>
+    <ClCompile Include="imagecropperlabel.cpp" />
+    <ClCompile Include="listitembase.cpp" />
+    <ClCompile Include="loadingdlg.cpp" />
+    <ClCompile Include="messagetextedit.cpp" />
+    <ClCompile Include="picturebubble.cpp" />
+    <ClCompile Include="resetdialog.cpp" />
+    <ClCompile Include="searchlist.cpp" />
+    <ClCompile Include="signupdialog.cpp" />
+    <ClCompile Include="statelabel.cpp" />
+    <ClCompile Include="statewidget.cpp" />
+    <ClCompile Include="tcpmgr.cpp" />
+    <ClCompile Include="textbubble.cpp" />
+    <ClCompile Include="timerbtn.cpp" />
+    <ClCompile Include="userdata.cpp" />
+    <ClCompile Include="userinfopage.cpp" />
+    <ClCompile Include="usermgr.cpp" />
+    <QtUic Include="adduseritem.ui" />
+    <QtUic Include="applyfriend.ui" />
+    <QtUic Include="applyfrienditem.ui" />
+    <QtUic Include="applyfriendpage.ui" />
+    <QtUic Include="authenfriend.ui" />
+    <QtUic Include="chatdialog.ui" />
+    <QtUic Include="chatpage.ui" />
+    <QtUic Include="chatuserwid.ui" />
+    <QtUic Include="conuseritem.ui" />
+    <QtUic Include="findfaildlg.ui" />
+    <QtUic Include="findsuccessdlg.ui" />
+    <QtUic Include="friendinfopage.ui" />
+    <QtUic Include="friendlabel.ui" />
+    <QtUic Include="grouptipitem.ui" />
+    <QtUic Include="loadingdlg.ui" />
+    <QtUic Include="logindialog.ui" />
+    <QtUic Include="mainwindow.ui" />
+    <QtMoc Include="mainwindow.h" />
+    <ClCompile Include="logindialog.cpp" />
+    <ClCompile Include="mainwindow.cpp" />
+    <ClCompile Include="main.cpp" />
+    <QtUic Include="resetdialog.ui" />
+    <QtUic Include="signup.ui" />
+    <QtUic Include="userinfopage.ui" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="userinfopage.h" />
+    <QtMoc Include="adduseritem.h" />
+    <QtMoc Include="findsuccessdlg.h" />
+    <QtMoc Include="clickedoncelabel.h" />
+    <QtMoc Include="applyfriend.h" />
+    <QtMoc Include="friendlabel.h" />
+    <QtMoc Include="findfaildlg.h" />
+    <QtMoc Include="contactuserlist.h" />
+    <QtMoc Include="conuseritem.h" />
+    <QtMoc Include="applyfriendpage.h" />
+    <QtMoc Include="applyfrienditem.h" />
+    <QtMoc Include="applyfriendlist.h" />
+    <QtMoc Include="grouptipitem.h" />
+    <QtMoc Include="authenfriend.h" />
+    <QtMoc Include="friendinfopage.h" />
+    <QtMoc Include="imagecropperdialog.h" />
+    <QtMoc Include="imagecropperlabel.h" />
+    <QtMoc Include="filetcpmgr.h" />
+    <ClInclude Include="userdata.h" />
+    <QtMoc Include="usermgr.h" />
+    <QtMoc Include="clickedlabel.h" />
+    <QtMoc Include="resetdialog.h" />
+    <QtMoc Include="tcpmgr.h" />
+    <QtMoc Include="chatdialog.h" />
+    <QtMoc Include="clickedbtn.h" />
+    <QtMoc Include="customizeedit.h" />
+    <QtMoc Include="chatuserlist.h" />
+    <QtMoc Include="chatuserwid.h" />
+    <QtMoc Include="listitembase.h" />
+    <QtMoc Include="loadingdlg.h" />
+    <QtMoc Include="chatpage.h" />
+    <QtMoc Include="statelabel.h" />
+    <QtMoc Include="searchlist.h" />
+    <QtMoc Include="chatview.h" />
+    <QtMoc Include="chatitembase.h" />
+    <QtMoc Include="bubbleframe.h" />
+    <QtMoc Include="textbubble.h" />
+    <QtMoc Include="picturebubble.h" />
+    <QtMoc Include="messagetextedit.h" />
+    <QtMoc Include="statewidget.h" />
+    <ClInclude Include="timerbtn.h" />
+    <QtMoc Include="httpmgr.h" />
+    <ClInclude Include="singleton.h" />
+    <QtMoc Include="signupdialog.h" />
+    <QtMoc Include="logindialog.h" />
+    <ClInclude Include="global.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="TinyChat.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="config.ini" />
+    <None Include="style\stylesheet.qss" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtRcc Include="Resource.qrc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
+    <Import Project="$(QtMsBuild)\qt.targets" />
+  </ImportGroup>
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
