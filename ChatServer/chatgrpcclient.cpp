@@ -213,7 +213,7 @@ TextChatMsgRsp ChatGrpcClient::notifyTextChatMsg(std::string server_name,
 		rsp.set_touid(req.touid());
 		for (const auto& text_data : req.textmsgs()) {
 			TextChatData* new_msg = rsp.add_textmsgs();
-			new_msg->set_msgid(text_data.msgid());
+			new_msg->set_msg_id(text_data.msg_id());
 			new_msg->set_msgcontent(text_data.msgcontent());
 		}
 
@@ -232,6 +232,35 @@ TextChatMsgRsp ChatGrpcClient::notifyTextChatMsg(std::string server_name,
 	Defer defercon([&stub, this, &pool]() {
 		pool->returnConnection(std::move(stub));
 		});
+
+	if (!status.ok()) {
+		rsp.set_error(ErrorCodes::RPCFailed);
+		return rsp;
+	}
+
+	return rsp;
+}
+
+// 通知踢掉客户端
+KickUserRsp ChatGrpcClient::notifyKickUser(std::string server_ip, const KickUserReq& req) {
+	KickUserRsp rsp;
+	Defer defer([&rsp, &req]() {
+		rsp.set_error(ErrorCodes::Success);
+		rsp.set_uid(req.uid());
+		});
+
+	auto find_iter = pools_.find(server_ip);
+	if (find_iter == pools_.end()) {
+		return rsp;
+	}
+
+	auto& pool = find_iter->second;
+	ClientContext context;
+	auto stub = pool->getConnection();
+	Defer defercon([&stub, this, &pool]() {
+		pool->returnConnection(std::move(stub));
+		});
+	Status status = stub->NotifyKickUser(&context, req, &rsp);
 
 	if (!status.ok()) {
 		rsp.set_error(ErrorCodes::RPCFailed);

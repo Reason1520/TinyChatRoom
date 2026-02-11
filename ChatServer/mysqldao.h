@@ -6,6 +6,8 @@
 #include <string>
 #include <memory>
 #include <iostream>
+#include "message.grpc.pb.h"
+#include "message.pb.h"
 
 /******************************************************************************
  * @file       mysqldao.h
@@ -15,6 +17,9 @@
  * @date       2025/12/30
  * @history
  *****************************************************************************/
+
+using message::AddFriendMsg;
+
 class MysqlPool;
 
 class MysqlDAO {
@@ -33,16 +38,27 @@ public:
     std::shared_ptr<UserInfo> getUser(int uid);
     std::shared_ptr<UserInfo> getUser(std::string name);
     // 添加添加好友请求
-    bool addFriendApply(const int& from, const int& to);
+    bool addFriendApply(const int& from, const int& to, const std::string& desc, const std::string& back_name);
     // 同意好友请求
     bool authFriendApply(const int& from, const int& to);
     // 添加联系人好友
-    bool addFriend(const int& from, const int& to, std::string back_name);
+    bool addFriend(const int& from, const int& to, std::string back_name, std::vector<std::shared_ptr<AddFriendMsg>>& chat_datas);
     // 获取好友请求列表
     bool getApplyList(int touid, std::vector<std::shared_ptr<ApplyInfo>>& applyList, int begin, int limit);
     // 获取用户好友列表
     bool getFriendList(int self_id, std::vector<std::shared_ptr<UserInfo> >& user_info_list);
-
+    // 获取用户从lastid开始的聊天线程
+    bool getUserThreads(int64_t userId, int64_t lastId, int pageSize, std::vector<std::shared_ptr<ChatThreadInfo>>& threads,
+        bool& loadMore, int64_t& nextLastId);
+    // 创建私聊
+    bool createPrivateChat(int user1_id, int user2_id, int& thread_id);
+    // 加载聊天消息
+    std::shared_ptr<PageResult> loadChatMsg(int threadId, int lastId, int pageSize);
+    // 添加聊天消息
+    bool addChatMsg(std::vector<std::shared_ptr<ChatMessage>>& chat_datas);
+    bool addChatMsg(std::shared_ptr<ChatMessage> chat_data);
+    // 获取聊天信息
+    std::shared_ptr<ChatMessage> getChatMsg(int message_id);
 private:
     std::unique_ptr<MysqlPool> pool_;
 };

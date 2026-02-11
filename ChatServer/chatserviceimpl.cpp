@@ -1,11 +1,12 @@
-﻿#include "ChatServiceImpl.h"
-#include "UserMgr.h"
-#include "CSession.h"
+﻿#include "chatserviceimpl.h"
+#include "userMgr.h"
+#include "csession.h"
 #include <json/json.h>
 #include <json/value.h>
 #include <json/reader.h>
-#include "RedisMgr.h"
-#include "MysqlMgr.h"
+#include "redismgr.h"
+#include "mysqlmgr.h"
+#include "cserver.h"
 
 /******************************************************************************
  * @file       chserviceimpl.cpp
@@ -44,6 +45,9 @@ Status ChatServiceImpl::NotifyAddFriend(ServerContext* context, const AddFriendR
 	rtvalue["applyuid"] = request->applyuid();
 	rtvalue["name"] = request->name();
 	rtvalue["desc"] = request->desc();
+	rtvalue["icon"] = request->icon();
+	rtvalue["sex"] = request->sex();
+	rtvalue["nick"] = request->nick();
 
 	std::string return_str = rtvalue.toStyledString();
 
@@ -55,6 +59,7 @@ Status ChatServiceImpl::NotifyAuthFriend(ServerContext* context, const AuthFrien
 	AuthFriendRsp* reply) {
 	//查找用户是否在本服务器
 	auto touid = request->touid();
+	auto fromuid = request->fromuid();
 	auto session = UserMgr::getInstance()->getSession(touid);
 
 	Defer defer([request, reply]() {
@@ -74,9 +79,9 @@ Status ChatServiceImpl::NotifyAuthFriend(ServerContext* context, const AuthFrien
 	rtvalue["fromuid"] = request->fromuid();
 	rtvalue["touid"] = request->touid();
 
-	std::string base_key = USER_BASE_INFO + std::to_string(touid);
+	std::string base_key = USER_BASE_INFO + std::to_string(fromuid);
 	auto user_info = std::make_shared<UserInfo>();
-	bool b_info = getBaseInfo(base_key, touid, user_info);
+	bool b_info = getBaseInfo(base_key, fromuid, user_info);
 	if (b_info) {
 		rtvalue["name"] = user_info->name;
 		rtvalue["nick"] = user_info->nick;
@@ -85,6 +90,16 @@ Status ChatServiceImpl::NotifyAuthFriend(ServerContext* context, const AuthFrien
 	}
 	else {
 		rtvalue["error"] = ErrorCodes::UidInvalid;
+	}
+
+	for (auto& msg : request->textmsgs()) {
+		Json::Value  chat;
+		chat["sender"] = msg.sender_id();
+		chat["msg_id"] = msg.msg_id();
+		chat["thread_id"] = msg.thread_id();
+		chat["unique_id"] = msg.unique_id();
+		chat["msg_content"] = msg.msgcontent();
+		rtvalue["chat_datas"].append(chat);
 	}
 
 	std::string return_str = rtvalue.toStyledString();
@@ -110,16 +125,18 @@ Status ChatServiceImpl::NotifyTextChatMsg(::grpc::ServerContext* context,
 	rtvalue["error"] = ErrorCodes::Success;
 	rtvalue["fromuid"] = request->fromuid();
 	rtvalue["touid"] = request->touid();
-
+	rtvalue["thread_id"] = request->thread_id();
 	//将聊天数据组织为数组
 	Json::Value text_array;
 	for (auto& msg : request->textmsgs()) {
 		Json::Value element;
 		element["content"] = msg.msgcontent();
-		element["msgid"] = msg.msgid();
+		element["unique_id"] = msg.unique_id();
+		element["message_id"] = msg.msg_id();
+		element["chat_time"] = msg.chat_time();
 		text_array.append(element);
 	}
-	rtvalue["text_array"] = text_array;
+	rtvalue["chat_datas"] = text_array;
 
 	std::string return_str = rtvalue.toStyledString();
 
@@ -171,4 +188,31 @@ bool ChatServiceImpl::getBaseInfo(std::string base_key, int uid, std::shared_ptr
 		RedisMgr::getInstance()->set(base_key, redis_root.toStyledString());
 	}
 
+}
+
+void ChatServiceImpl::RegisterServer(std::shared_ptr<CServer> pServer) {
+	p_server_ = pServer;
+}
+
+Status ChatServiceImpl::NotifyKickUser(::grpc::ServerContext* context, const KickUserReq* request, KickUserRsp* reply) {
+	//查找用户是否在本服务器
+	auto uid = request->uid();
+	auto session = UserMgr::getInstance()->getSession(uid);
+
+	Defer defer([request, reply]() {
+		reply->set_error(ErrorCodes::Success);
+		reply->set_uid(request->uid());
+		});
+
+	//用户不在内存中则直接返回
+	if (session == nullptr) {
+		return Status::OK;
+	}
+
+	//在内存中则直接发送通知对方
+	session->notifyOffline(uid);
+	//清除旧的连接
+	p_server_->clearSession(session->getUuid());
+
+	return Status::OK;
 }

@@ -37,6 +37,9 @@ using message::LoginRsp;
 using message::LoginReq;
 using message::ChatService;
 
+using message::KickUserReq;
+using message::KickUserRsp;
+
 class ChatConPool {
 public:
 	ChatConPool(size_t poolSize, std::string host, std::string port)
@@ -113,8 +116,9 @@ public:
 	// 获取用户基础信息
 	bool getBaseInfo(std::string base_key, int uid, std::shared_ptr<UserInfo>& userinfo);
 	// 通知有聊天消息
-	TextChatMsgRsp notifyTextChatMsg(std::string server_ip,
-		const TextChatMsgReq& req, const Json::Value& rtvalue);
+	TextChatMsgRsp notifyTextChatMsg(std::string server_ip, const TextChatMsgReq& req, const Json::Value& rtvalue);
+	// 通知踢掉客户端
+	KickUserRsp notifyKickUser(std::string server_ip, const KickUserReq& req);
 private:
 	ChatGrpcClient();
 	std::unordered_map<std::string, std::unique_ptr<ChatConPool>> pools_;

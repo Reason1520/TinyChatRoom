@@ -53,6 +53,14 @@ private:
 	void authFriendApply(std::shared_ptr<CSession> session, const short& msg_id, const std::string& msg_data);
 	// 发送信息回调函数
 	void dealChatTextMsg(std::shared_ptr<CSession> session, const short& msg_id, const std::string& msg_data);
+	// 心跳处理回调函数
+	void heartBeatHandler(std::shared_ptr<CSession> session, const short& msg_id, const std::string& msg_data);
+	// 加载聊天记录回调函数
+	void getUserThreadsHandler(std::shared_ptr<CSession> session, const short& msg_id, const std::string& msg_data);
+	// 创建私聊回调函数
+	void createPrivateChat(std::shared_ptr<CSession> session, const short& msg_id, const std::string& msg_data);
+	// 加载聊天消息回调函数
+	void loadChatMsg(std::shared_ptr<CSession> session, const short& msg_id, const std::string& msg_data);
 
 	std::thread worker_thread_;
 	// 消息处理队列
@@ -79,6 +87,9 @@ private:
 	bool getFriendApplyInfo(int to_uid, std::vector<std::shared_ptr<ApplyInfo>>& list);
 	// 获取好友列表信息
 	bool getFriendList(int self_id, std::vector<std::shared_ptr<UserInfo>>& user_list);
+	// 获取用户聊天线程
+	bool getUserThreads(int64_t userId, int64_t lastId, int pageSize, std::vector<std::shared_ptr<ChatThreadInfo>>& threads,
+		bool& loadMore, int64_t& nextLastId);
 };
 
 #endif // LOGICSYSTEM_H

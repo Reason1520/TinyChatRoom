@@ -3,6 +3,7 @@
 #include <atomic>
 #include "redismgr.h"
 #include "configmgr.h"
+#include "distlock.h"
 
 /******************************************************************************
  * @file       redismgr.cpp
@@ -142,11 +143,22 @@ RedisMgr::RedisMgr() {
     auto host = gCfgMgr["Redis"]["Host"];
     auto port = gCfgMgr["Redis"]["Port"];
     auto pwd = gCfgMgr["Redis"]["Passwd"];
-    con_pool_.reset(new RedisConPool(5, host.c_str(), atoi(port.c_str()), pwd.c_str()));
+    con_pool_.reset(new RedisConPool(10, host.c_str(), atoi(port.c_str()), pwd.c_str()));
 }
 
 RedisMgr::~RedisMgr() {
     close();
+}
+
+void RedisMgr::initCount(std::string server_name) {
+    auto lock_key = LOCK_COUNT;
+    auto identifier = RedisMgr::getInstance()->acquireLock(lock_key, LOCK_TIME_OUT, ACQUIRE_TIME_OUT);
+    //利用defer解锁
+    Defer defer2([this, identifier, lock_key]() {
+        RedisMgr::getInstance()->releaseLock(lock_key, identifier);
+        });
+
+    RedisMgr::getInstance()->hSet(LOGIN_COUNT, server_name, "0");
 }
 
 // 字符串操作
@@ -463,4 +475,39 @@ bool RedisMgr::existsKey(const std::string& key) {
 // 关闭
 void RedisMgr::close() {
     con_pool_->Close();
+}
+
+// 获取分布式锁
+std::string RedisMgr::acquireLock(const std::string& lockName,
+    int lockTimeout, int acquireTimeout) {
+
+    auto connect = con_pool_->getConnection();
+    if (connect == nullptr) {
+        return "";
+    }
+
+    Defer defer([&connect, this]() {
+        con_pool_->returnConnection(connect);
+        });
+
+    return DistLock::getInst().acquireLock(connect, lockName, lockTimeout, acquireTimeout);
+}
+
+// 解锁
+bool RedisMgr::releaseLock(const std::string& lockName,
+    const std::string& identifier) {
+    if (identifier.empty()) {
+        return true;
+    }
+    auto connect = con_pool_->getConnection();
+    if (connect == nullptr) {
+        return false;
+    }
+
+
+    Defer defer([&connect, this]() {
+        con_pool_->returnConnection(connect);
+        });
+
+    return DistLock::getInst().releaseLock(connect, lockName, identifier);
 }

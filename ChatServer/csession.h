@@ -30,13 +30,21 @@ public:
 
     tcp::socket& getSocket();
     std::string& getUuid();
-    void setUserId(int uid);
     int getUserId();
+    void setUserId(int uid);
     std::shared_ptr<CSession> sharedSelf();
     void start();
     void send(char* msg, short max_length, short msgid);
     void send(std::string msg, short msgid);
     void close();
+    // 通知客户端要下线
+    void notifyOffline(int uid);
+    // 更新心跳
+    void updateHeartbeat();
+    // 心跳是否过期
+    bool isHeartbeatExpired(std::time_t& now);
+    // 清理过期的会话
+    void dealExceptionSession();
 
 private:
     tcp::socket socket_;
@@ -54,6 +62,9 @@ private:
     std::shared_ptr<MsgNode> recv_head_node_;
     std::shared_ptr<RecvNode> recv_msg_node_;
 
+    //记录上次接受数据的时间
+    std::atomic<time_t> last_heartbeat_;
+
     // 异步读逻辑
     void asyncReadHead(int total_len);
     void asyncReadBody(int total_len);
@@ -67,7 +78,7 @@ private:
         std::function<void(const boost::system::error_code&, std::size_t)> handler);
 
     // 读写处理函数
-    void handleRead(const boost::system::error_code& error, size_t  bytes_transferred, std::shared_ptr<CSession> shared_self);
+    void handleRead(const boost::system::error_code& error, size_t bytes_transferred, std::shared_ptr<CSession> shared_self);
     void handleWrite(const boost::system::error_code& error, std::shared_ptr<CSession> _self_shared);
 
     // 接收缓冲区

@@ -74,3 +74,9 @@ std::string url_decode(const std::string& str)
     }
     return strTemp;
 }
+
+// 生成唯一的uuid
+std::string generateUUID() {
+    boost::uuids::uuid uuid = boost::uuids::random_generator()();
+    return to_string(uuid);
+}

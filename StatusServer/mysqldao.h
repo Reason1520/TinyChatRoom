@@ -1,6 +1,7 @@
 ﻿#ifndef MYSQLDAO_H
 #define MYSQLDAO_H
 #include "const.h"
+#include "data.h"
 #include <string>
 #include <memory>
 #include <iostream>

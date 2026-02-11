@@ -75,11 +75,8 @@ std::string url_decode(const std::string& str)
     return strTemp;
 }
 
-// redis前缀
-#define CODEPREFIX "code_"
-#define USERIPPREFIX  "uip_"
-#define USERTOKENPREFIX  "utoken_"
-#define IPCOUNTPREFIX  "ipcount_"
-#define USER_BASE_INFO "ubaseinfo_"
-#define LOGIN_COUNT  "logincount"
-#define NAME_INFO  "nameinfo_"
+// 生成唯一的uuid
+std::string generateUUID() {
+    boost::uuids::uuid uuid = boost::uuids::random_generator()();
+    return to_string(uuid);
+}

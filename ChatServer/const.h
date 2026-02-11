@@ -11,6 +11,9 @@
 #include <json/value.h>
 #include <json/reader.h>
 #include <functional>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 /******************************************************************************
  * @file       const.h
@@ -53,6 +56,8 @@ enum ErrorCodes {
     TokenInvalid = 1010,    // Token无效
     UidInvalid = 1011,      // UID无效
     RPCGetFailed = 1012,    // 找不到chatServer
+    CreatChatFailed = 1013, //创建聊天失败
+    LoadChatFailed = 1014,  //加载聊天失败
 };
 
 // 配置管理类
@@ -80,6 +85,14 @@ private:
 #define USER_BASE_INFO "ubaseinfo_"
 #define LOGIN_COUNT  "logincount"
 #define NAME_INFO  "nameinfo_"
+#define LOCK_PREFIX "lock_"
+#define USER_SESSION_PREFIX "usession_"
+#define LOCK_COUNT "lockcount"
+
+//分布式锁的持有时间
+#define LOCK_TIME_OUT 10
+//分布式锁的重试时间
+#define ACQUIRE_TIME_OUT 5
 
 // 传递数据相关
 #define MAX_LENGTH 1024*2
@@ -104,7 +117,27 @@ enum MSG_IDS {
     ID_TEXT_CHAT_MSG_REQ = 1017, //文本聊天信息请求
     ID_TEXT_CHAT_MSG_RSP = 1018, //文本聊天信息回复
     ID_NOTIFY_TEXT_CHAT_MSG_REQ = 1019, //通知用户文本聊天信息
+
     ID_NOTIFY_OFF_LINE_REQ = 1021, //通知用户下线
+
+    ID_HEART_BEAT_REQ = 1023,      //心跳请求
+    ID_HEARTBEAT_RSP = 1024,       //心跳回复
+    ID_LOAD_CHAT_THREAD_REQ = 1025, //加载聊天线程请求
+    ID_LOAD_CHAT_THREAD_RSP = 1026, //加载聊天线程回复
+    ID_CREATE_PRIVATE_CHAT_REQ = 1027, //创建私聊请求
+    ID_CREATE_PRIVATE_CHAT_RSP = 1028, //创建私聊回复
+
+    ID_LOAD_CHAT_MSG_REQ = 1029,      //加载聊天消息
+    ID_LOAD_CHAT_MSG_RSP = 1030,      //加载聊天消息
+
+    ID_IMG_CHAT_MSG_REQ = 1035,       //图片聊天消息请求
+    ID_IMG_CHAT_MSG_RSP = 1036,       //图片聊天信息回复
+    ID_NOTIFY_IMG_CHAT_MSG_REQ = 1039, //通知用户图片聊天信息
+    ID_FILE_INFO_SYNC_REQ = 1041,      //文件信息同步请求
+    ID_FILE_INFO_SYNC_RSP = 1042       //文件信息同步回复
 };
+
+// 生成唯一的uuid
+std::string generateUUID();
 
 #endif //CONST_H

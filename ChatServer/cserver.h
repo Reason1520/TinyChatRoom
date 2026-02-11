@@ -6,6 +6,7 @@
 #include <memory.h>
 #include <map>
 #include <mutex>
+#include <boost/asio/steady_timer.hpp>
 
 /******************************************************************************
  * @file       cserver.h
@@ -19,11 +20,13 @@
 using namespace std;
 using boost::asio::ip::tcp;
 
-class CServer {
+class CServer: public std::enable_shared_from_this<CServer> {
 public:
     CServer(boost::asio::io_context& io_context, short port);
     ~CServer();
     void clearSession(std::string);
+    // 检查server中是否有指定uuid的session
+    bool checkValid(std::string uuid);
 private:
     // 监听与处理新连接请求
     void startAccept();
@@ -35,6 +38,10 @@ private:
     // 会话管理
     std::map<std::string, shared_ptr<CSession>> sessions_;
     std::mutex mutex_;  // 保护会话
+    boost::asio::steady_timer timer_;
+
+    // 定时心跳监测
+    void on_timer(const boost::system::error_code& e);
 };
 
 #endif // CSERVER_H

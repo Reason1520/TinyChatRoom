@@ -5,6 +5,7 @@
 #include "redismgr.h"
 #include "mysqlmgr.h"
 #include "const.h"
+#include "configmgr.h"
 #include <iostream>
 
 /******************************************************************************
@@ -81,6 +82,7 @@ LogicSystem::LogicSystem() {
         auto name = src_root["user"].asString();
         auto pwd = src_root["passwd"].asString();
         auto confirm = src_root["confirm"].asString();
+        auto icon = src_root["icon"].asString();
 
         if (pwd != confirm) {
             std::cout << "password err " << std::endl;
@@ -129,6 +131,7 @@ LogicSystem::LogicSystem() {
         root["user"] = name;
         root["passwd"] = pwd;
         root["confirm"] = confirm;
+        root["icon"] = icon;
         root["varifycode"] = src_root["varifycode"].asString();
         std::string jsonstr = root.toStyledString();
         beast::ostream(connection->response_.body()) << jsonstr;
@@ -251,8 +254,14 @@ LogicSystem::LogicSystem() {
         root["user"] = name;
         root["uid"] = userInfo.uid;
         root["token"] = reply.token();
-        root["host"] = reply.host();
-        root["port"] = reply.port();
+        root["chathost"] = reply.host();
+        root["chatport"] = reply.port();
+        auto& gCfgMgr = ConfigMgr::getInst();
+        std::string res_port = gCfgMgr["ResServer"]["Port"];
+        std::string res_host = gCfgMgr["ResServer"]["Host"];
+        root["reshost"] = res_host;
+        root["resport"] = res_port;
+
         std::string jsonstr = root.toStyledString();
         beast::ostream(connection->response_.body()) << jsonstr;
         return true;

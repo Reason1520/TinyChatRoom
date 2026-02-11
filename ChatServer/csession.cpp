@@ -1,6 +1,7 @@
 ﻿#include "csession.h"
 #include "cserver.h"
 #include "logicsystem.h"
+#include "redismgr.h"
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -55,6 +56,20 @@ void CSession::close() {
     b_close_ = true;
 }
 
+// 通知客户端要下线
+void CSession::notifyOffline(int uid) {
+
+    Json::Value  rtvalue;
+    rtvalue["error"] = ErrorCodes::Success;
+    rtvalue["uid"] = uid;
+
+
+    std::string return_str = rtvalue.toStyledString();
+
+    send(return_str, ID_NOTIFY_OFF_LINE_REQ);
+    return;
+}
+
 // 异步读取消息头部
 void CSession::asyncReadHead(int total_len) {
     auto self = shared_from_this();
@@ -62,9 +77,35 @@ void CSession::asyncReadHead(int total_len) {
         try {
             if (ec) {
                 // 如果出现错误，关闭连接
-                std::cout << "handle read failed, error is " << ec.what() << std::endl;
+                std::cout << "handle read failed, error is " << ec.what() << endl;
                 close();
-                server_->clearSession(uuid_);
+
+                //加锁清除session
+                auto uid_str = std::to_string(user_uid_);
+                auto lock_key = LOCK_PREFIX + uid_str;
+                auto identifier = RedisMgr::getInstance()->acquireLock(lock_key, LOCK_TIME_OUT, ACQUIRE_TIME_OUT);
+                Defer defer([identifier, lock_key, self, this]() {
+                    server_->clearSession(uuid_);
+                    RedisMgr::getInstance()->releaseLock(lock_key, identifier);
+                    });
+
+                if (identifier.empty()) {
+                    return;
+                }
+                std::string redis_session_id = "";
+                auto bsuccess = RedisMgr::getInstance()->get(USER_SESSION_PREFIX + uid_str, redis_session_id);
+                if (!bsuccess) {
+                    return;
+                }
+
+                if (redis_session_id != uuid_) {
+                    //说明有客户在其他服务器异地登录了
+                    return;
+                }
+
+                RedisMgr::getInstance()->del(USER_SESSION_PREFIX + uid_str);
+                //清除用户登录信息
+                RedisMgr::getInstance()->del(USERIPPREFIX + uid_str);
                 return;
             }
 
@@ -157,9 +198,10 @@ void CSession::asyncReadBody(int total_len) {
     asyncReadFull(total_len, [self, this, total_len](const boost::system::error_code& ec, std::size_t bytes_transfered) {
         try {
             if (ec) {
-                std::cout << "handle read failed, error is " << ec.what() << std::endl;
+                // 如果出现错误，关闭连接
+                std::cout << "handle read failed, error is " << ec.what() << endl;
                 close();
-                server_->clearSession(uuid_);
+                dealExceptionSession();
                 return;
             }
 
@@ -168,6 +210,12 @@ void CSession::asyncReadBody(int total_len) {
                     << total_len << "]" << std::endl;
                 close();
                 server_->clearSession(uuid_);
+                return;
+            }
+
+            //判断连接无效
+            if (!server_->checkValid(uuid_)) {
+                close();
                 return;
             }
 
@@ -238,14 +286,64 @@ void CSession::handleWrite(const boost::system::error_code& error, shared_ptr<CS
             }
         }
         else {
-            std::cout << "handle write failed, error is " << error.what() << endl;
+            // 如果出现错误，关闭连接
+            std::cout << "handle read failed, error is " << error.what() << endl;
             close();
-            server_->clearSession(uuid_);
+            dealExceptionSession();
+            return;
         }
     }
     catch (std::exception& e) {
         std::cout << "Exception code :" << e.what() << std::endl;
     }
+}
+
+// 清理过期的会话
+void CSession::dealExceptionSession() {
+    auto self = shared_from_this();
+    //加锁清除session
+    auto uid_str = std::to_string(user_uid_);
+    auto lock_key = LOCK_PREFIX + uid_str;
+    auto identifier = RedisMgr::getInstance()->acquireLock(lock_key, LOCK_TIME_OUT, ACQUIRE_TIME_OUT);
+    Defer defer([identifier, lock_key, self, this]() {
+        server_->clearSession(uuid_);
+        RedisMgr::getInstance()->releaseLock(lock_key, identifier);
+        });
+
+    if (identifier.empty()) {
+        return;
+    }
+    std::string redis_session_id = "";
+    auto bsuccess = RedisMgr::getInstance()->get(USER_SESSION_PREFIX + uid_str, redis_session_id);
+    if (!bsuccess) {
+        return;
+    }
+
+    if (redis_session_id != uuid_) {
+        //说明有客户在其他服务器异地登录了
+        return;
+    }
+
+    RedisMgr::getInstance()->del(USER_SESSION_PREFIX + uid_str);
+    //清除用户登录信息
+    RedisMgr::getInstance()->del(USERIPPREFIX + uid_str);
+}
+
+// 更新心跳
+void CSession::updateHeartbeat() {
+    time_t now = std::time(nullptr);
+    last_heartbeat_ = now;
+}
+
+// 心跳是否过期
+bool CSession::isHeartbeatExpired(std::time_t& now) {
+    double diff_sec = std::difftime(now, last_heartbeat_);
+    if (diff_sec > 20) {
+        std::cout << "heartbeat expired, session id is  " << uuid_ << std::endl;
+        return true;
+    }
+
+    return false;
 }
 
 
