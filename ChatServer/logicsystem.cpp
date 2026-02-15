@@ -124,7 +124,7 @@ void LogicSystem::loginHandler(std::shared_ptr<CSession> session, const short& m
 	auto uid = root["uid"].asInt();
 	auto token = root["token"].asString();
 	std::cout << "user login uid is  " << uid << " user token  is "
-		<< token << std::endl;
+		<< token << endl;
 
 	Json::Value  rtvalue;
 	Defer defer([this, &rtvalue, session]() {
@@ -150,48 +150,6 @@ void LogicSystem::loginHandler(std::shared_ptr<CSession> session, const short& m
 
 	rtvalue["error"] = ErrorCodes::Success;
 
-	//此处添加分布式锁，让该线程独占登录
-	//拼接用户ip对应的key
-	auto lock_key = LOCK_PREFIX + uid_str;
-	auto identifier = RedisMgr::getInstance()->acquireLock(lock_key, LOCK_TIME_OUT, ACQUIRE_TIME_OUT);
-	//利用defer解锁
-	Defer defer2([this, identifier, lock_key]() {
-		RedisMgr::getInstance()->releaseLock(lock_key, identifier);
-		});
-	//此处判断该用户是否在别处或者本服务器登录
-
-	std::string uid_ip_value = "";
-	auto uid_ip_key = USERIPPREFIX + uid_str;
-	bool b_ip = RedisMgr::getInstance()->get(uid_ip_key, uid_ip_value);
-	//说明用户已经登录了，此处应该踢掉之前的用户登录状态
-	if (b_ip) {
-		//获取当前服务器ip信息
-		auto& cfg = ConfigMgr::getInst();
-		auto self_name = cfg["SelfServer"]["Name"];
-		//如果之前登录的服务器和当前相同，则直接在本服务器踢掉
-		if (uid_ip_value == self_name) {
-			//查找旧有的连接
-			auto old_session = UserMgr::getInstance()->getSession(uid);
-
-			//此处应该发送踢人消息
-			if (old_session) {
-				std::cout << "kick user " << uid << " from old session " << old_session->getUuid() << std::endl;
-				old_session->notifyOffline(uid);
-				//清除旧的连接
-				p_server_->clearSession(old_session->getUuid());
-			}
-
-		}
-		else {
-			//如果不是本服务器，则通知grpc通知其他服务器踢掉
-			//发送通知
-			KickUserReq kick_req;
-			kick_req.set_uid(uid);
-			std::cout << "send kick user " << uid << " msg to peer server" << std::endl;
-			ChatGrpcClient::getInstance()->notifyKickUser(uid_ip_value, kick_req);
-		}
-	}
-
 
 	std::string base_key = USER_BASE_INFO + uid_str;
 	auto user_info = std::make_shared<UserInfo>();
@@ -208,6 +166,7 @@ void LogicSystem::loginHandler(std::shared_ptr<CSession> session, const short& m
 	rtvalue["desc"] = user_info->desc;
 	rtvalue["sex"] = user_info->sex;
 	rtvalue["icon"] = user_info->icon;
+	rtvalue["token"] = token;
 
 	//从数据库获取申请列表
 	std::vector<std::shared_ptr<ApplyInfo>> apply_list;
@@ -242,26 +201,59 @@ void LogicSystem::loginHandler(std::shared_ptr<CSession> session, const short& m
 	}
 
 	auto server_name = ConfigMgr::getInst().getValue("SelfServer", "Name");
-	//将登录数量增加
-	auto rd_res = RedisMgr::getInstance()->hGet(LOGIN_COUNT, server_name);
-	int count = 0;
-	if (!rd_res.empty()) {
-		count = std::stoi(rd_res);
+	{
+		//此处添加分布式锁，让该线程独占登录
+		//拼接用户ip对应的key
+		auto lock_key = LOCK_PREFIX + uid_str;
+		auto identifier = RedisMgr::getInstance()->acquireLock(lock_key, LOCK_TIME_OUT, ACQUIRE_TIME_OUT);
+		//利用defer解锁
+		Defer defer2([this, identifier, lock_key]() {
+			RedisMgr::getInstance()->releaseLock(lock_key, identifier);
+			});
+		//此处判断该用户是否在别处或者本服务器登录
+
+		std::string uid_ip_value = "";
+		auto uid_ip_key = USERIPPREFIX + uid_str;
+		bool b_ip = RedisMgr::getInstance()->get(uid_ip_key, uid_ip_value);
+		//说明用户已经登录了，此处应该踢掉之前的用户登录状态
+		if (b_ip) {
+			//获取当前服务器ip信息
+			auto& cfg = ConfigMgr::getInst();
+			auto self_name = cfg["SelfServer"]["Name"];
+			//如果之前登录的服务器和当前相同，则直接在本服务器踢掉
+			if (uid_ip_value == self_name) {
+				//查找旧有的连接
+				auto old_session = UserMgr::getInstance()->getSession(uid);
+
+				//此处应该发送踢人消息
+				if (old_session) {
+					old_session->notifyOffline(uid);
+					//清除旧的连接
+					p_server_->clearSession(old_session->getUuid());
+				}
+
+			}
+			else {
+				//如果不是本服务器，则通知grpc通知其他服务器踢掉
+				//发送通知
+				KickUserReq kick_req;
+				kick_req.set_uid(uid);
+				ChatGrpcClient::getInstance()->notifyKickUser(uid_ip_value, kick_req);
+			}
+		}
+
+		//session绑定用户uid
+		session->setUserId(uid);
+		//为用户设置登录ip server的名字
+		std::string  ipkey = USERIPPREFIX + uid_str;
+		RedisMgr::getInstance()->set(ipkey, server_name);
+		//uid和session绑定管理,方便以后踢人操作
+		UserMgr::getInstance()->setUserSession(uid, session);
+		std::string  uid_session_key = USER_SESSION_PREFIX + uid_str;
+		RedisMgr::getInstance()->set(uid_session_key, session->getUuid());
+
 	}
 
-	count++;
-	auto count_str = std::to_string(count);
-	RedisMgr::getInstance()->hSet(LOGIN_COUNT, server_name, count_str);
-
-	//session绑定用户uid
-	session->setUserId(uid);
-	//为用户设置登录ip server的名字
-	std::string  ipkey = USERIPPREFIX + uid_str;
-	RedisMgr::getInstance()->set(ipkey, server_name);
-	//uid和session绑定管理,方便以后踢人操作
-	UserMgr::getInstance()->setUserSession(uid, session);
-	std::string  uid_session_key = USER_SESSION_PREFIX + uid_str;
-	RedisMgr::getInstance()->set(uid_session_key, session->getUuid());
 	return;
 }
 

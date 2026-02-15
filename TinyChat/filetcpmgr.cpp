@@ -3,6 +3,15 @@
 #include <QPainter>
 #include <QStandardPaths>
 
+/******************************************************************************
+ * @file       filetcpmgr.cpp
+ * @brief      文件系统类实现，管理与resoureserver的TCP连接，发送文件数据
+ *
+ * @author     llfc
+ * @date       2026/2/14
+ * @history
+ *****************************************************************************/
+
 FileTcpMgr::FileTcpMgr(QObject* parent) : QObject(parent),
 _host(""), _port(0), _b_recv_pending(false), _message_id(0), _message_len(0),
 _bytes_sent(0), _pending(false), _cwnd_size(0)
@@ -39,33 +48,33 @@ _bytes_sent(0), _pending(false), _cwnd_size(0)
 		   }
 
 		//buffer剩余长读是否满足消息体长度，不满足则退出继续等待接受
-	   if (_buffer.size() < _message_len) {
+		if (_buffer.size() < _message_len) {
 			_b_recv_pending = true;
 			return;
-	   }
-
-	   _b_recv_pending = false;
-	   // 读取消息体
-	   QByteArray messageBody = _buffer.mid(0, _message_len);
-	   qDebug() << "receive body msg is " << messageBody;
-
-	   _buffer = _buffer.mid(_message_len);
-	   handleMsg(ReqId(_message_id),_message_len, messageBody);
 		}
 
-		});
+		_b_recv_pending = false;
+		// 读取消息体
+		QByteArray messageBody = _buffer.mid(0, _message_len);
+		qDebug() << "receive body msg is " << messageBody;
+
+		_buffer = _buffer.mid(_message_len);
+		handleMsg(ReqId(_message_id),_message_len, messageBody);
+		}
+
+	});
 
 
-       QObject::connect(&_socket, QOverload<QAbstractSocket::SocketError>::of(&QTcpSocket::errorOccurred), [&](QAbstractSocket::SocketError socketError) {
-           Q_UNUSED(socketError)
-           qDebug() << "Error:" << _socket.errorString();
-       });
+    QObject::connect(&_socket, QOverload<QAbstractSocket::SocketError>::of(&QTcpSocket::errorOccurred), [&](QAbstractSocket::SocketError socketError) {
+       Q_UNUSED(socketError)
+       qDebug() << "Error:" << _socket.errorString();
+    });
 
 	// 处理连接断开
 	QObject::connect(&_socket, &QTcpSocket::disconnected, this, [&]() {
 		qDebug() << "Disconnected from server.";
 		emit sig_connection_closed();
-		});
+	});
 
 
 	//连接发送信号用来发送数据
@@ -98,7 +107,7 @@ _bytes_sent(0), _pending(false), _cwnd_size(0)
 		_pending = true;
 		qint64 w2 = _socket.write(_current_block);
 		qDebug() << "[TcpMgr] Dequeued and write() returned" << w2;
-		});
+	});
 
 	//连接
 	QObject::connect(this, &FileTcpMgr::sig_close, this, &FileTcpMgr::slot_tcp_close);
@@ -237,7 +246,7 @@ void FileTcpMgr::initHandlers()
 
 		int err = recvObj["error"].toInt();
 		if (err != ErrorCodes::SUCCESS) {
-			qDebug() << "Login Failed, err is " << err;
+			qDebug() << "Upload Head Icon Failed, err is " << err;
 			//emit upload_failed();
 			return;
 		}

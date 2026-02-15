@@ -5,18 +5,28 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QJsonDocument>
+#include <QThread>
+#include <QQueue>
 #include "singleton.h"
 #include "global.h"
 #include "userdata.h"
 
 /******************************************************************************
  * @file       tcp.h
- * @brief      服务器和客户端长连接TCP管理类
+ * @brief      服务器和客户端长连接TCP管理类，使用独立线程
  *
  * @author     lueying
  * @date       2026/1/4
  * @history
  *****************************************************************************/
+
+class TcpThread :public std::enable_shared_from_this<TcpThread> {
+public:
+    TcpThread();
+    ~TcpThread();
+private:
+    QThread* tcp_thread_;
+};
 
 class TcpMgr :public QObject, public Singleton<TcpMgr>,
     public std::enable_shared_from_this<TcpMgr>
@@ -34,22 +44,32 @@ private:
     bool b_recv_pending_;   // 是否有未接收完的数据包
     quint16 message_id_;
     quint16 message_len_;
-
     // 消息处理回调函数
     QMap<ReqId, std::function<void(ReqId id, int len, QByteArray data)>> handlers_;
+    //发送队列
+    QQueue<QByteArray> send_queue_;
+    //正在发送的包
+    QByteArray current_block_;
+    //当前已发送的字节数
+    qint64 bytes_sent_;
+    //是否正在发送
+    bool pending_;
+
     void initHandlers();
     // 处理消息
     void handleMsg(ReqId id, int len, QByteArray data);
+    // 注册自定义的类型
+    void registerMetaType();
 
 public slots:
     // 连接对端服务器
     void slot_tcp_connect(std::shared_ptr<ServerInfo> si);
-    void slot_send_data(ReqId reqId, QString data);
+    void slot_send_data(ReqId reqId, QByteArray data);
     void slot_tcp_close();
 
 signals:
     void sig_con_success(bool bsuccess);
-    void sig_send_data(ReqId reqId, QString data);
+    void sig_send_data(ReqId reqId, QByteArray data);
     void sig_login_failed(int);
     void sig_swich_chatdlg();
     void sig_user_search(std::shared_ptr<SearchInfo>);      // 用户搜索完成信号

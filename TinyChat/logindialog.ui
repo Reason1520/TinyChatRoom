@@ -54,7 +54,13 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_8">
        <item>
-        <widget class="QLabel" name="label">
+        <widget class="QLabel" name="head_label">
+         <property name="minimumSize">
+          <size>
+           <width>200</width>
+           <height>200</height>
+          </size>
+         </property>
          <property name="maximumSize">
           <size>
            <width>200</width>

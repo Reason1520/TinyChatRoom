@@ -10,7 +10,22 @@
  * @history
  *****************************************************************************/
 
-TcpMgr::TcpMgr() :host_(""), port_(0), b_recv_pending_(false), message_id_(0), message_len_(0) {
+TcpThread::TcpThread() {
+    tcp_thread_ = new QThread();
+    // 将 TcpMgr 单例对象及其所有的槽函数（Slots）执行环境移动到了 tcp_thread_ 中
+    TcpMgr::getInstance()->moveToThread(tcp_thread_);
+    QObject::connect(tcp_thread_, &QThread::finished, tcp_thread_, &QObject::deleteLater);
+
+    tcp_thread_->start();
+}
+
+TcpThread::~TcpThread() {
+    tcp_thread_->quit();
+}
+
+TcpMgr::TcpMgr() :host_(""), port_(0), b_recv_pending_(false), message_id_(0), 
+message_len_(0), bytes_sent_(0), pending_(false), socket_(this) {
+    registerMetaType();
     QObject::connect(&socket_, &QTcpSocket::connected, [&]() {
         qDebug() << "Connected to server!";
         // 连接建立后发送消息
@@ -18,13 +33,10 @@ TcpMgr::TcpMgr() :host_(""), port_(0), b_recv_pending_(false), message_id_(0), m
     });
 
     // 读取数据
-    QObject::connect(&socket_, &QTcpSocket::readyRead, [&]() {
+    QObject::connect(&socket_, &QTcpSocket::readyRead, this, [&]() {
         // 当有数据可读时，读取所有数据
         // 读取所有数据并追加到缓冲区
         buffer_.append(socket_.readAll());
-
-        QDataStream stream(&buffer_, QIODevice::ReadOnly);
-        stream.setVersion(QDataStream::Qt_5_0);
 
         forever{
             //先解析头部
@@ -34,30 +46,30 @@ TcpMgr::TcpMgr() :host_(""), port_(0), b_recv_pending_(false), message_id_(0), m
                    return; // 数据不够，等待更多数据
                }
 
-               // 预读取消息ID和消息长度，但不从缓冲区中移除
+               // ✅ 每次都重新创建stream
+               QDataStream stream(buffer_);
+               stream.setVersion(QDataStream::Qt_5_0);
                stream >> message_id_ >> message_len_;
-
-               //将buffer 中的前四个字节移除
-               buffer_ = buffer_.mid(sizeof(quint16) * 2);
-
-               // 输出读取的数据
+               buffer_.remove(0, sizeof(quint16) * 2);  // 使用remove代替mid赋值
                qDebug() << "Message ID:" << message_id_ << ", Length:" << message_len_;
+
            }
 
-            //buffer剩余长读是否满足消息体长度，不满足则退出继续等待接受
-            if (buffer_.size() < message_len_) {
-                b_recv_pending_ = true;
-                return;
-            }
-
-            b_recv_pending_ = false;
-            // 读取消息体
-            QByteArray messageBody = buffer_.mid(0, message_len_);
-            qDebug() << "receive body msg is " << messageBody;
-
-            buffer_= buffer_.mid(message_len_);
-            handleMsg(ReqId(message_id_), message_len_, messageBody);
+        //buffer剩余长读是否满足消息体长度，不满足则退出继续等待接受
+        if (buffer_.size() < message_len_) {
+            b_recv_pending_ = true;
+            return;
         }
+
+        b_recv_pending_ = false;
+        // 读取消息体
+        QByteArray messageBody = buffer_.mid(0, message_len_);
+        qDebug() << "receive body msg is " << messageBody;
+
+        buffer_ = buffer_.mid(message_len_);
+        handleMsg(ReqId(message_id_),message_len_, messageBody);
+        }
+
     });
 
     QObject::connect(&socket_, QOverload<QAbstractSocket::SocketError>::of(&QTcpSocket::errorOccurred), [&](QAbstractSocket::SocketError socketError) {
@@ -75,10 +87,67 @@ TcpMgr::TcpMgr() :host_(""), port_(0), b_recv_pending_(false), message_id_(0), m
     // 发送数据
     QObject::connect(this, &TcpMgr::sig_send_data, this, &TcpMgr::slot_send_data);
 
+    // 连接发送信号
+    QObject::connect(&socket_, &QTcpSocket::bytesWritten, this, [this](qint64 bytes) {
+        //更新发送数据
+        bytes_sent_ += bytes;
+        //未发送完整
+        if (bytes_sent_ < current_block_.size()) {
+            //继续发送
+            auto data_to_send = current_block_.mid(bytes_sent_);
+            socket_.write(data_to_send);
+            return;
+        }
+
+        //发送完全，则查看队列是否为空
+        if (send_queue_.isEmpty()) {
+            //队列为空，说明已经将所有数据发送完成，将pending设置为false，这样后续要发送数据时可以继续发送
+            current_block_.clear();
+            pending_ = false;
+            bytes_sent_ = 0;
+            return;
+        }
+
+        //队列不为空，则取出队首元素，继续发送数据
+        current_block_ = send_queue_.dequeue();
+        bytes_sent_ = 0;
+        pending_ = true;
+        qint64 w2 = socket_.write(current_block_);
+        qDebug() << "[TcpMgr] Dequeued and write() returned" << w2;
+        });
+
     //关闭socket
     connect(this, &TcpMgr::sig_close, this, &TcpMgr::slot_tcp_close);
-
+    // 注册消息
     initHandlers();
+}
+
+void TcpMgr::registerMetaType() {
+    // 注册所有自定义类型
+    qRegisterMetaType<ServerInfo>("ServerInfo");
+    qRegisterMetaType<SearchInfo>("SearchInfo");
+    qRegisterMetaType<std::shared_ptr<SearchInfo>>("std::shared_ptr<SearchInfo>");
+
+    qRegisterMetaType<AddFriendApply>("AddFriendApply");
+    qRegisterMetaType<std::shared_ptr<AddFriendApply>>("std::shared_ptr<AddFriendApply>");
+
+    qRegisterMetaType<ApplyInfo>("ApplyInfo");
+
+    qRegisterMetaType<std::shared_ptr<AuthInfo>>("std::shared_ptr<AuthInfo>");
+
+    qRegisterMetaType<AuthRsp>("AuthRsp");
+    qRegisterMetaType<std::shared_ptr<AuthRsp>>("std::shared_ptr<AuthRsp>");
+
+    qRegisterMetaType<UserInfo>("UserInfo");
+
+    qRegisterMetaType<std::vector<std::shared_ptr<TextChatData>>>("std::vector<std::shared_ptr<TextChatData>>");
+
+    qRegisterMetaType<std::vector<std::shared_ptr<ChatThreadInfo>>>("std::vector<std::shared_ptr<ChatThreadInfo>>");
+
+    qRegisterMetaType<std::shared_ptr<ChatThreadData>>("std::shared_ptr<ChatThreadData>");
+    qRegisterMetaType<ReqId>("ReqId");
+    qRegisterMetaType<std::shared_ptr<ImgChatData>>("std::shared_ptr<ImgChatData>");
+    qRegisterMetaType<std::vector<std::shared_ptr<ChatDataBase>>>("std::vector<std::shared_ptr<ChatDataBase>>");
 }
 
 // 连接对端服务器
@@ -92,14 +161,11 @@ void TcpMgr::slot_tcp_connect(std::shared_ptr<ServerInfo> si) {
 }
 
 // 发送数据
-void TcpMgr::slot_send_data(ReqId reqId, QString data) {
+void TcpMgr::slot_send_data(ReqId reqId, QByteArray data) {
     uint16_t id = reqId;
 
-    // 将字符串转换为UTF-8编码的字节数组
-    QByteArray dataBytes = data.toUtf8();
-
     // 计算长度（使用网络字节序转换）
-    quint16 len = static_cast<quint16>(dataBytes.size());
+    quint16 len = static_cast<quint16>(data.length());
 
     // 创建一个QByteArray用于存储要发送的所有数据
     QByteArray block;
@@ -112,11 +178,23 @@ void TcpMgr::slot_send_data(ReqId reqId, QString data) {
     out << id << len;
 
     // 添加字符串数据
-    block.append(dataBytes);
+    block.append(data);
 
-    // 发送数据
-    socket_.write(block);
-    qDebug() << "tcp mgr send byte data is " << block;
+    //判断是否正在发送
+    if (pending_) {
+        //放入队列直接返回，因为目前有数据正在发送
+        send_queue_.enqueue(block);
+        return;
+    }
+
+    // 没有正在发送，把这包设为“当前块”，重置计数，并写出去
+    current_block_ = block;        // ← 保存当前正在发送的 block
+    bytes_sent_ = 0;            // ← 归零
+    pending_ = true;         // ← 标记正在发送
+
+    qint64 written = socket_.write(current_block_);
+    qDebug() << "tcp mgr send byte data is" << current_block_
+        << ", write() returned" << written;
 }
 
 // 初始化消息处理器
@@ -157,7 +235,8 @@ void TcpMgr::initHandlers() {
         auto nick = jsonObj["nick"].toString();
         auto icon = jsonObj["icon"].toString();
         auto sex = jsonObj["sex"].toInt();
-        auto user_info = std::make_shared<UserInfo>(uid, name, nick, icon, sex);
+        auto desc = jsonObj["desc"].toString();
+        auto user_info = std::make_shared<UserInfo>(uid, name, nick, icon, sex, "", desc);
 
         UserMgr::getInstance()->setUserInfo(user_info);
         UserMgr::getInstance()->setToken(jsonObj["token"].toString());

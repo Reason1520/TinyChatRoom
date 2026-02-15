@@ -1,6 +1,9 @@
 ﻿#include "logindialog.h"
 #include "httpmgr.h"
 #include "tcpmgr.h"
+#include "filetcpmgr.h"
+#include <QPainter>
+#include <QPainterPath>
 
 /******************************************************************************
  * @file       logindialog.cpp
@@ -32,12 +35,55 @@ LoginDialog::LoginDialog(QWidget *parent)
     connect(TcpMgr::getInstance().get(), &TcpMgr::sig_con_success, this, &LoginDialog::slot_tcp_con_finish);
     //连接tcp管理者发出的登陆失败信号
     connect(TcpMgr::getInstance().get(), &TcpMgr::sig_login_failed, this, &LoginDialog::slot_login_failed);
+
+    //连接tcp连接资源服务器请求的信号和槽函数
+    connect(this, &LoginDialog::sig_connect_res_server,
+        FileTcpMgr::getInstance().get(), &FileTcpMgr::slot_tcp_connect);
+
+    //连接资源管理tcp发出的连接成功信号
+    connect(FileTcpMgr::getInstance().get(), &FileTcpMgr::sig_con_success, this, &LoginDialog::slot_res_con_finish);
+    initHead();
 }
 
 LoginDialog::~LoginDialog() {
 	if (ui) {
 		delete ui;
 	}
+}
+
+// 初始化头像
+void LoginDialog::initHead() {
+    // 定义一个固定的目标尺寸
+    QSize targetSize(200, 200);
+    // 强制设置 Label 的大小，防止被布局压缩
+    ui->head_label->setFixedSize(targetSize);
+
+    // 加载图片
+    QPixmap originalPixmap(":/image/res/QQ图片20221122234905.png");
+    // 设置图片自动缩放
+    qDebug() << originalPixmap.size() << ui->head_label->size();
+    originalPixmap = originalPixmap.scaled(ui->head_label->size(),
+        Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+    // 创建一个和原始图片相同大小的QPixmap，用于绘制圆角图片
+    QPixmap roundedPixmap(originalPixmap.size());
+    roundedPixmap.fill(Qt::transparent); // 用透明色填充
+
+    QPainter painter(&roundedPixmap);
+    painter.setRenderHint(QPainter::Antialiasing); // 设置抗锯齿，使圆角更平滑
+    painter.setRenderHint(QPainter::SmoothPixmapTransform);
+
+    // 使用QPainterPath设置圆角
+    QPainterPath path;
+    path.addRoundedRect(0, 0, originalPixmap.width(), originalPixmap.height(), 10, 10); // 最后两个参数分别是x和y方向的圆角半径
+    painter.setClipPath(path);
+
+    // 将原始图片绘制到roundedPixmap上
+    painter.drawPixmap(0, 0, originalPixmap);
+
+    // 设置绘制好的圆角图片到QLabel上
+    ui->head_label->setPixmap(roundedPixmap);
+
 }
 
 // http消息处理
@@ -130,22 +176,14 @@ void LoginDialog::slot_login_mod_finish(ReqId id, QString res, ErrorCodes err) {
 }
 
 // 收到tcp连接结果槽函数
-void LoginDialog::slot_tcp_con_finish(bool bsuccess) {
+void LoginDialog::slot_tcp_con_finish(bool bsuccess)
+{
     if (bsuccess) {
-        showTip(tr("聊天服务连接成功，正在登录..."), true);
-        QJsonObject jsonObj;
-        jsonObj["uid"] = si_->_uid;
-        jsonObj["token"] = si_->_token;
-
-        QJsonDocument doc(jsonObj);
-        QString jsonString = doc.toJson(QJsonDocument::Indented);
-
-        // 再次发送身份包给chat server
-        TcpMgr::getInstance()->sig_send_data(ReqId::ID_CHAT_LOGIN, jsonString);
+        showTip(tr("聊天服务连接成功，正在连接资源服务器..."), true);
+        emit sig_connect_res_server(si_);
     }
     else {
         showTip(tr("网络异常"), false);
-        enableBtn(true);
     }
 }
 
@@ -155,6 +193,27 @@ void LoginDialog::slot_login_failed(int err) {
         .arg(err);
     showTip(result, false);
     enableBtn(true);
+}
+
+// 资源服务器连接结果槽函数
+void LoginDialog::slot_res_con_finish(bool bsuccess) {
+    if (bsuccess) {
+        showTip(tr("聊天服务连接成功，正在登录..."), true);
+        QJsonObject jsonObj;
+        jsonObj["uid"] = si_->_uid;
+        jsonObj["token"] = si_->_token;
+
+        QJsonDocument doc(jsonObj);
+        QByteArray jsonData = doc.toJson(QJsonDocument::Indented);
+
+        //发送tcp请求给chat server
+        emit TcpMgr::getInstance()->sig_send_data(ReqId::ID_CHAT_LOGIN, jsonData);
+
+    }
+    else {
+        showTip(tr("网络异常"), false);
+        enableBtn(true);
+    }
 }
 
 // 添加错误信息

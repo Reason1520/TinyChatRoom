@@ -11,12 +11,14 @@
 - 👥 好友申请与管理
 - 💬 一对一文本聊天
 - 💾 聊天记录持久化存储与分页加载
+- 🖼️ 用户头像上传、下载与本地缓存
 - 🎨 现代化的聊天气泡界面
 - 📱 联系人列表管理
 
 ### 服务端功能
 - 🌐 网关服务器（GateServer）- 处理HTTP请求
 - 💬 聊天服务器（ChatServer）- 处理TCP长连接和消息转发
+- 🗂️ 资源服务器（ResourceServer）- 处理头像等资源的上传、下载与存储
 - 📊 状态服务器（StatusServer）- 管理用户在线状态
 - ✉️ 验证服务器（VerifyServer）- 邮件验证码服务
 - 🔒 Redis 分布式锁保证消息写入一致性
@@ -51,6 +53,11 @@
             ┌───────────────┐
             │ VerifyServer  │
             │  (Node.js)    │
+            └───────────────┘
+
+            ┌───────────────┐
+            │ResourceServer │
+            │ (文件/头像)   │
             └───────────────┘
 ```
 
@@ -113,6 +120,17 @@ TinyChatRoom/
 │   ├── statusserviceimpl.*# gRPC服务实现
 │   └── config.ini         # 配置文件
 │
+├── ResourceServer/        # 资源服务器
+│   ├── ResourceServer.cpp # 主入口
+│   ├── CServer.*          # TCP服务器
+│   ├── CSession.*         # 会话管理
+│   ├── LogicSystem.*      # 业务分发
+│   ├── LogicWorker.*      # 资源任务调度
+│   ├── FileWorker.*       # 文件上传下载处理
+│   ├── FileSystem.*       # 文件系统操作
+│   ├── UserMgr.*          # 用户资源管理
+│   └── config.ini         # 配置文件
+│
 └── VerifyServer/          # 验证服务器（Node.js）
     ├── server.js          # 主入口
     ├── email.js           # 邮件发送
@@ -144,7 +162,7 @@ TinyChatRoom/
    ```
 
 4. **启动后端服务器**
-   - 按顺序启动：StatusServer → GateServer → ChatServer
+   - 按顺序启动：StatusServer → GateServer → ChatServer → ResourceServer
 
 ### 客户端运行
 
@@ -154,14 +172,19 @@ TinyChatRoom/
 
 ## 📌 更新日志
 
-### v2 - 聊天消息持久化（2026-02-11）
+### v3 - 资源服务器与头像上传
+- 新增 `ResourceServer`，支持头像资源上传、下载与存储
+- 客户端新增头像上传流程，并支持头像本地缓存与回显
+- 客户端登录后增加资源服务器连接流程
+
+### v2 - 聊天消息持久化
 - 新增聊天消息持久化存储到 MySQL
 - 新增聊天线程（ChatThread）和消息（ChatMessage）数据模型
 - 实现基于游标的分页查询，支持加载历史消息
 - 引入 Redis 分布式锁，保证并发场景下消息写入的一致性
 - 新增时间戳工具类
 
-### v1 - 初始版本（2026-02-03）
+### v1 - 初始版本
 - 完整的用户注册、登录、密码重置流程
 - 好友搜索、申请、认证功能
 - 一对一实时文本聊天

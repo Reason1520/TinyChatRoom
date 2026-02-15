@@ -114,7 +114,7 @@ enum ClickLbState {
 };
 
 // GateServer的url的头部
-const QString gate_url_prefix = "http://localhost:8080";
+extern QString gate_url_prefix;
 
 // 全局密钥
 const QString XOR_KEY = "my_secret_key_123";

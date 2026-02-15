@@ -98,3 +98,5 @@ QPixmap CreateLoadingPlaceholder(int width, int height) {
 
     return placeholder;
 }
+
+QString gate_url_prefix = "";

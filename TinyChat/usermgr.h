@@ -89,12 +89,15 @@ public:
     void rmvUploadFile(QString name);
     //获取上传信息
     std::shared_ptr<QFileInfo> getUploadInfoByName(QString name);
+    // 判断资源是否正在下载
     bool isDownLoading(QString name);
+    // 更新正在下载资源
     void addDownloadFile(QString name, std::shared_ptr<DownloadInfo> file_info);
     void rmvDownloadFile(QString name);
     std::shared_ptr<DownloadInfo> getDownloadInfo(QString name);
-    //添加资源路径到将要重置的Label集合
+    // 添加Label到path对应的要重置的Label集合
     void addLabelToReset(QString path, QLabel* label);
+    // 重置指定Label的图标
     void resetLabelIcon(QString path);
     void addTransFile(QString name, std::shared_ptr<MsgInfo> msg_info);
     std::shared_ptr<MsgInfo> getTransFileByName(QString name);

@@ -159,7 +159,7 @@ void UserInfoPage::slot_up_load()
     QString storageDir = QStandardPaths::writableLocation(
                              QStandardPaths::AppDataLocation);
     auto uid = UserMgr::getInstance()->getUid();
-    storageDir = storageDir + "/" + QString::number(uid);
+    storageDir = storageDir + "/user/" + QString::number(uid);
     // 2. 在其下再建一个 avatars 子目录
     QDir dir(storageDir);
     if (!dir.exists("avatars")) {

@@ -14,6 +14,15 @@
 #include <memory>
 #include "global.h"
 
+/******************************************************************************
+ * @file       filetcpmgr.h
+ * @brief      文件系统类，管理与resoureserver的TCP连接，发送文件数据
+ *
+ * @author     llfc
+ * @date       2026/2/14
+ * @history
+ *****************************************************************************/
+
 class FileTcpThread: public std::enable_shared_from_this<FileTcpThread>{
 public:
     FileTcpThread();

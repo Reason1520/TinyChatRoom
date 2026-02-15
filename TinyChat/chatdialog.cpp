@@ -188,20 +188,20 @@ ChatDialog::ChatDialog(QWidget* parent) :
 	// 连接tcp返回的文字聊天信息回复
 	connect(TcpMgr::getInstance().get(), &TcpMgr::sig_chat_msg_rsp, this, &ChatDialog::slot_add_chat_msg);
 
-	////连接tcp返回的图片聊天信息回复
+	//连接tcp返回的图片聊天信息回复
 	//connect(TcpMgr::getInstance().get(), &TcpMgr::sig_chat_img_rsp, this, &ChatDialog::slot_add_img_msg);
-	////重置label icon
-	//connect(FileTcpMgr::getInstance().get(), &FileTcpMgr::sig_reset_label_icon, this, &ChatDialog::slot_reset_icon);
-	////接收tcp返回的上传进度信息
-	//connect(FileTcpMgr::getInstance().get(), &FileTcpMgr::sig_update_upload_progress,
-	//	this, &ChatDialog::slot_update_upload_progress);
-	////接收tcp返回的下载进度信息
-	//connect(FileTcpMgr::getInstance().get(), &FileTcpMgr::sig_update_download_progress,
-	//	this, &ChatDialog::slot_update_download_progress);
+	//重置label icon
+	connect(FileTcpMgr::getInstance().get(), &FileTcpMgr::sig_reset_label_icon, this, &ChatDialog::slot_reset_icon);
+	//接收tcp返回的上传进度信息
+	connect(FileTcpMgr::getInstance().get(), &FileTcpMgr::sig_update_upload_progress,
+		this, &ChatDialog::slot_update_upload_progress);
+	//接收tcp返回的下载进度信息
+	connect(FileTcpMgr::getInstance().get(), &FileTcpMgr::sig_update_download_progress,
+		this, &ChatDialog::slot_update_download_progress);
 
-	////接收tcp返回的下载完成信息
-	//connect(FileTcpMgr::getInstance().get(), &FileTcpMgr::sig_download_finish,
-	//	this, &ChatDialog::slot_download_finish);
+	//接收tcp返回的下载完成信息
+	connect(FileTcpMgr::getInstance().get(), &FileTcpMgr::sig_download_finish,
+		this, &ChatDialog::slot_download_finish);
 }
 
 ChatDialog::~ChatDialog() {

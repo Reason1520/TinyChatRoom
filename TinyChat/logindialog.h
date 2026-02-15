@@ -20,8 +20,8 @@ class LoginDialog : public QDialog
 signals:
 	void switch_sign_up();		// 切换到注册页面的信号
 	void switch_reset();		// 切换到重置密码页面的信号
-	void sig_connect_tcp(std::shared_ptr<ServerInfo>);		// 通知TcpMgr建立连接
-	void sig_connect_res_server(std::shared_ptr<ServerInfo>);
+	void sig_connect_tcp(std::shared_ptr<ServerInfo>);			// 通知TcpMgr建立连接
+	void sig_connect_res_server(std::shared_ptr<ServerInfo>);	// 通知FlieTcpMgr建立连接
 
 public:
 	LoginDialog(QWidget *parent = nullptr);
@@ -36,7 +36,8 @@ public slots:
 	void slot_tcp_con_finish(bool bsuccess);
 	// 登录聊天失败槽函数
 	void slot_login_failed(int err);
-	//void slot_res_con_finish(bool bsuccess);
+	// 资源服务器连接结果槽函数
+	void slot_res_con_finish(bool bsuccess);
 
 private:
 	Ui::LoginDialogClass *ui;
@@ -45,7 +46,7 @@ private:
 	QMap<ReqId, std::function<void(const QJsonObject&)>> handlers_;	// http请求与接受处理函数映射表
 	QMap<TipErr, QString> tip_errs_;		// 提示错误映射表
 
-	//void initHead();
+	void initHead();						// 初始化头像
 	void initHttpHandlers();				// 注册消息处理
 	void showTip(QString str, bool b_ok);	// 显示提示信息
 	// 检测函数

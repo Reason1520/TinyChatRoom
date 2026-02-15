@@ -60,14 +60,12 @@ void UserMgr::setIcon(QString name) {
     user_info_->_icon = name;
 }
 
-QString UserMgr::getDesc()
-{
+QString UserMgr::getDesc() {
     std::lock_guard<std::mutex> lock(mtx_);
     return user_info_->_desc;
 }
 
-std::shared_ptr<UserInfo> UserMgr::getUserInfo()
-{
+std::shared_ptr<UserInfo> UserMgr::getUserInfo() {
     std::lock_guard<std::mutex> lock(mtx_);
     return user_info_;
 }
