@@ -60,6 +60,10 @@ private:
     void handleMsg(ReqId id, int len, QByteArray data);
     // 注册自定义的类型
     void registerMetaType();
+    // 创建空白图片占位并请求下载图片
+    void createPlaceholderImgMsgL(QString img_path_str, QString msg_content,
+        int msg_id, int thread_id, int send_uid, int recv_id, int status, QString chat_time,
+        std::vector<std::shared_ptr<ChatDataBase>>& chat_datas);
 
 public slots:
     // 连接对端服务器
@@ -87,7 +91,9 @@ signals:
     void sig_load_chat_msg(int thread_id, int last_msg_id, bool load_more, 
         std::vector<std::shared_ptr<ChatDataBase>> chat_datas); // 加载聊天消息完成信号
     void sig_chat_msg_rsp(int thread_id,
-        std::vector<std::shared_ptr<TextChatData>> chat_datas); // 服务器收到聊天消息信号
+        std::vector<std::shared_ptr<TextChatData>> chat_datas); // 收到服务器确认聊天文字消息发送信号
+    void sig_chat_img_rsp(int thread_id, std::shared_ptr<ImgChatData> msg_list);    // 收到服务器确认聊天图片消息发送信号
+    void sig_img_chat_msg(std::shared_ptr<ImgChatData> msg_list);
 };
 
 #endif // TCPMGR_H

@@ -42,7 +42,7 @@ public:
     void SendData(ReqId reqId, QByteArray data);
     void CloseConnection();
     void SendDownloadInfo(std::shared_ptr<DownloadInfo> download,QString req_type);
-    void BatchSend(std::shared_ptr<MsgInfo> msg_info, int sender, int receiver);
+    void BatchSend(std::shared_ptr<MsgInfo> msg_info, int sender, int receiver);    // 拥塞窗口发送
     void ContinueUploadFile(QString unique_name);
     void ContinueDownloadFile(QString unique_name);
     void CopyFile(QString src_path, QString dst_path, QString dst_dir);

@@ -140,4 +140,11 @@ enum MSG_IDS {
 // 生成唯一的uuid
 std::string generateUUID();
 
+enum MsgStatus {
+    UN_READ = 0,  //对方未读
+    SEND_FAILED = 1,  //发送失败
+    READED = 2,  //对方已读
+    UN_UPLOAD = 3 //未上传完成
+};
+
 #endif //CONST_H

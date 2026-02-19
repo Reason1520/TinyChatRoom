@@ -223,6 +223,9 @@
     <ClCompile Include="filetcpmgr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="clickablelabel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -371,6 +374,9 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="filetcpmgr.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="clickablelabel.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>

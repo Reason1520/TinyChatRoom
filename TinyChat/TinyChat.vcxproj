@@ -115,6 +115,7 @@
     <ClCompile Include="chatuserlist.cpp" />
     <ClCompile Include="chatuserwid.cpp" />
     <ClCompile Include="chatview.cpp" />
+    <ClCompile Include="clickablelabel.cpp" />
     <ClCompile Include="clickedbtn.cpp" />
     <ClCompile Include="clickedlabel.cpp" />
     <ClCompile Include="clickedoncelabel.cpp" />
@@ -194,6 +195,7 @@
     <QtMoc Include="imagecropperdialog.h" />
     <QtMoc Include="imagecropperlabel.h" />
     <QtMoc Include="filetcpmgr.h" />
+    <QtMoc Include="clickablelabel.h" />
     <ClInclude Include="userdata.h" />
     <QtMoc Include="usermgr.h" />
     <QtMoc Include="clickedlabel.h" />

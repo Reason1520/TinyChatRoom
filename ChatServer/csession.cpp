@@ -70,6 +70,23 @@ void CSession::notifyOffline(int uid) {
     return;
 }
 
+// 
+void CSession::notifyChatImgRecv(const::message::NotifyChatImgReq* request) {
+    Json::Value  rtvalue;
+    rtvalue["error"] = ErrorCodes::Success;
+    rtvalue["message_id"] = request->message_id();
+    rtvalue["sender_id"] = request->from_uid();
+    rtvalue["receiver_id"] = request->to_uid();
+    rtvalue["img_name"] = request->file_name();
+    rtvalue["total_size"] = std::to_string(request->total_size());
+    rtvalue["thread_id"] = request->thread_id();
+
+    std::string return_str = rtvalue.toStyledString();
+    //通知图片聊天信息
+    send(return_str, ID_NOTIFY_IMG_CHAT_MSG_REQ);
+    return;
+}
+
 // 异步读取消息头部
 void CSession::asyncReadHead(int total_len) {
     auto self = shared_from_this();

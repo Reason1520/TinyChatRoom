@@ -187,7 +187,7 @@ bool ChatServiceImpl::getBaseInfo(std::string base_key, int uid, std::shared_ptr
 		redis_root["icon"] = userinfo->icon;
 		RedisMgr::getInstance()->set(base_key, redis_root.toStyledString());
 	}
-
+	return true;
 }
 
 void ChatServiceImpl::RegisterServer(std::shared_ptr<CServer> pServer) {
@@ -214,5 +214,28 @@ Status ChatServiceImpl::NotifyKickUser(::grpc::ServerContext* context, const Kic
 	//清除旧的连接
 	p_server_->clearSession(session->getUuid());
 
+	return Status::OK;
+}
+
+Status ChatServiceImpl::NotifyChatImgMsg(::grpc::ServerContext* context, const ::message::NotifyChatImgReq* request, ::message::NotifyChatImgRsp* response) {
+	//查找用户是否在本服务器
+	auto uid = request->to_uid();
+	auto session = UserMgr::getInstance()->getSession(uid);
+
+	Defer defer([request, response]() {
+		//设置具体的回包信息
+		response->set_error(ErrorCodes::Success);
+		response->set_message_id(request->message_id());
+		});
+
+	//用户不在内存中则直接返回
+	if (session == nullptr) {
+		//这里只是返回1个状态
+		return Status::OK;
+	}
+
+	//在内存中则直接发送通知对方
+	session->notifyChatImgRecv(request);
+	//这里只是返回1个状态
 	return Status::OK;
 }

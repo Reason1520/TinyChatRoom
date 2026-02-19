@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <string>
 #include <vector>
 struct UserInfo {
@@ -29,15 +29,15 @@ struct ApplyInfo {
 	int _status;
 };
 
-//ÁÄÌìÏß³ÌĞÅÏ¢
+//èŠå¤©çº¿ç¨‹ä¿¡æ¯
 struct ChatThreadInfo {
 	int _thread_id;
 	std::string _type;     // "private" or "group"
-	int _user1_id;    // Ë½ÁÄÊ±¶ÔÓ¦ private_chat.user1_id£»ÈºÁÄÊ±ÉèÎª 0
-	int _user2_id;    // Ë½ÁÄÊ±¶ÔÓ¦ private_chat.user2_id£»ÈºÁÄÊ±ÉèÎª 0
+	int _user1_id;    // ç§èŠæ—¶å¯¹åº” private_chat.user1_idï¼›ç¾¤èŠæ—¶è®¾ä¸º 0
+	int _user2_id;    // ç§èŠæ—¶å¯¹åº” private_chat.user2_idï¼›ç¾¤èŠæ—¶è®¾ä¸º 0
 };
 
-//ÁÄÌìÏûÏ¢ĞÅÏ¢
+//èŠå¤©æ¶ˆæ¯ä¿¡æ¯
 struct ChatMessage {
 	int message_id;
 	int thread_id;
@@ -47,11 +47,12 @@ struct ChatMessage {
 	std::string content;
 	std::string chat_time;
 	int status;
+	int msg_type;
 };
 
-// ²éÑ¯½á¹û½á¹¹£¬Ôö¼Ónext_cursor×Ö¶Î
+// æŸ¥è¯¢ç»“æœç»“æ„ï¼Œå¢åŠ next_cursorå­—æ®µ
 struct PageResult {
 	std::vector<ChatMessage> messages;
 	bool load_more;
-	int next_cursor;  // ±¾Ò³×îºóÒ»Ìõmessage_id£¬ÓÃÓÚÏÂ´Î²éÑ¯
+	int next_cursor;  // æœ¬é¡µæœ€åä¸€æ¡message_idï¼Œç”¨äºä¸‹æ¬¡æŸ¥è¯¢
 };

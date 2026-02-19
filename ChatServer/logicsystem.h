@@ -51,7 +51,7 @@ private:
 	void addFriendApply(std::shared_ptr<CSession> session, const short& msg_id, const std::string& msg_data);
 	// 同意好友申请信息回调函数
 	void authFriendApply(std::shared_ptr<CSession> session, const short& msg_id, const std::string& msg_data);
-	// 发送信息回调函数
+	// 收到文字信息发送回调函数
 	void dealChatTextMsg(std::shared_ptr<CSession> session, const short& msg_id, const std::string& msg_data);
 	// 心跳处理回调函数
 	void heartBeatHandler(std::shared_ptr<CSession> session, const short& msg_id, const std::string& msg_data);
@@ -61,6 +61,8 @@ private:
 	void createPrivateChat(std::shared_ptr<CSession> session, const short& msg_id, const std::string& msg_data);
 	// 加载聊天消息回调函数
 	void loadChatMsg(std::shared_ptr<CSession> session, const short& msg_id, const std::string& msg_data);
+	// 收到图片信息发送回调函数
+	void dealChatImgMsg(std::shared_ptr<CSession> session, const short& msg_id, const std::string& msg_data);
 
 	std::thread worker_thread_;
 	// 消息处理队列

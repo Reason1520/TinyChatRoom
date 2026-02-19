@@ -1,4 +1,4 @@
-# TinyChatRoom 🗨️
+﻿# TinyChatRoom 🗨️
 
 一个基于 Qt 和 C++ 构建的分布式即时聊天系统，包含完整的客户端和多服务器后端架构。
 
@@ -12,13 +12,14 @@
 - 💬 一对一文本聊天
 - 💾 聊天记录持久化存储与分页加载
 - 🖼️ 用户头像上传、下载与本地缓存
+- 🖼️ 图片消息发送与接收（支持缩略图与异步下载）
 - 🎨 现代化的聊天气泡界面
 - 📱 联系人列表管理
 
 ### 服务端功能
 - 🌐 网关服务器（GateServer）- 处理HTTP请求
 - 💬 聊天服务器（ChatServer）- 处理TCP长连接和消息转发
-- 🗂️ 资源服务器（ResourceServer）- 处理头像等资源的上传、下载与存储
+- 🗂️ 资源服务器（ResourceServer）- 处理头像、聊天图片等资源的上传、下载与存储
 - 📊 状态服务器（StatusServer）- 管理用户在线状态
 - ✉️ 验证服务器（VerifyServer）- 邮件验证码服务
 - 🔒 Redis 分布式锁保证消息写入一致性
@@ -126,7 +127,7 @@ TinyChatRoom/
 │   ├── CSession.*         # 会话管理
 │   ├── LogicSystem.*      # 业务分发
 │   ├── LogicWorker.*      # 资源任务调度
-│   ├── FileWorker.*       # 文件上传下载处理
+│   ├── FileWorker.*       # 文件/图片上传下载处理
 │   ├── FileSystem.*       # 文件系统操作
 │   ├── UserMgr.*          # 用户资源管理
 │   └── config.ini         # 配置文件
@@ -172,6 +173,11 @@ TinyChatRoom/
 
 ## 📌 更新日志
 
+### v4 - 图片消息传输
+- 新增聊天图片消息协议与消息类型
+- 支持图片上传、断点续传、下载与进度同步
+- 聊天窗口支持图片消息气泡显示与本地落盘
+
 ### v3 - 资源服务器与头像上传
 - 新增 `ResourceServer`，支持头像资源上传、下载与存储
 - 客户端新增头像上传流程，并支持头像本地缓存与回显
@@ -193,3 +199,5 @@ TinyChatRoom/
 ## 教程以及原项目地址
 
 https://github.com/secondtonone1/llfcchat
+
+

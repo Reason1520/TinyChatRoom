@@ -158,8 +158,8 @@ ChatDialog::ChatDialog(QWidget* parent) :
 	connect(TcpMgr::getInstance().get(), &TcpMgr::sig_text_chat_msg,
 		this, &ChatDialog::slot_text_chat_msg);
 
-	//connect(TcpMgr::getInstance().get(), &TcpMgr::sig_img_chat_msg,
-	//	this, &ChatDialog::slot_img_chat_msg);
+	connect(TcpMgr::getInstance().get(), &TcpMgr::sig_img_chat_msg,
+		this, &ChatDialog::slot_img_chat_msg);
 
 	timer_ = new QTimer(this);
 	connect(timer_, &QTimer::timeout, this, [this]() {
@@ -189,7 +189,7 @@ ChatDialog::ChatDialog(QWidget* parent) :
 	connect(TcpMgr::getInstance().get(), &TcpMgr::sig_chat_msg_rsp, this, &ChatDialog::slot_add_chat_msg);
 
 	//连接tcp返回的图片聊天信息回复
-	//connect(TcpMgr::getInstance().get(), &TcpMgr::sig_chat_img_rsp, this, &ChatDialog::slot_add_img_msg);
+	connect(TcpMgr::getInstance().get(), &TcpMgr::sig_chat_img_rsp, this, &ChatDialog::slot_add_img_msg);
 	//重置label icon
 	connect(FileTcpMgr::getInstance().get(), &FileTcpMgr::sig_reset_label_icon, this, &ChatDialog::slot_reset_icon);
 	//接收tcp返回的上传进度信息

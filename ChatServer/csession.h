@@ -8,6 +8,8 @@
 #include <queue>
 #include "const.h"
 #include "msgnode.h"
+#include "message.grpc.pb.h"
+#include "message.pb.h"
 
 /******************************************************************************
  * @file       csession.h
@@ -19,6 +21,7 @@
  *****************************************************************************/
 
 using boost::asio::ip::tcp;
+using message::NotifyChatImgReq;
 
 class CServer;
 class LogicSystem;
@@ -39,6 +42,8 @@ public:
     void close();
     // 通知客户端要下线
     void notifyOffline(int uid);
+    // 通知聊天图片上传完成
+    void notifyChatImgRecv(const ::message::NotifyChatImgReq* request);
     // 更新心跳
     void updateHeartbeat();
     // 心跳是否过期

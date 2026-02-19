@@ -4,7 +4,7 @@
 #include "bubbleframe.h"
 #include <QHBoxLayout>
 #include <QPixmap>
-//#include "clickablelabel.h"
+#include "clickablelabel.h"
 #include <QProgressBar>
 #include "global.h"
 
@@ -25,13 +25,17 @@ public:
 
     PictureBubble(const QPixmap& picture, ChatRole role, int total, QWidget* parent = nullptr);
 
-    //void setProgress(int value, int total_value);
-    //void showProgress(bool show);
-    //void setState(TransferState state);
-    //void resumeState();
-    //void setMsgInfo(std::shared_ptr<MsgInfo> msg);
+    // 设置进度
+    void setProgress(int value, int total_value);
+    // 展示进度条
+    void showProgress(bool show);
+    // 设置状态
+    void setState(TransferState state);
+    // 传输停止后恢复状态
+    void resumeState();
+    void setMsgInfo(std::shared_ptr<MsgInfo> msg);
     TransferState state() const { return m_state; }
-    //void setDownloadFinish(std::shared_ptr<MsgInfo> msg, QString file_path);
+    void setDownloadFinish(std::shared_ptr<MsgInfo> msg, QString file_path);
 
 signals:
     void pauseRequested(QString unique_name, TransferType transfer_type);   // 请求暂停
@@ -39,14 +43,14 @@ signals:
     void cancelRequested(QString unique_name, TransferType transfer_type);  // 请求取消
 
 private slots:
-    //void onPictureClicked();
+    void onPictureClicked();
 
 private:
-    //void updateIconOverlay();
-    //void adjustSize();
+    void updateIconOverlay();
+    void adjustSize();
 
 private:
-    // ClickableLabel* m_picLabel;
+    ClickableLabel* m_picLabel;
     QProgressBar* m_progressBar;
     TransferState m_state;
 
